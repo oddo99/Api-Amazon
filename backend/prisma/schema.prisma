@@ -1,0 +1,338 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String   @id @default(cuid())
+  email             String   @unique
+  password          String   // Hashed password
+  name              String
+  role              String   @default("user") // admin, user
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  ownedAccounts     Account[]  // Accounts owned by this user (admin)
+  accountAccess     UserAccountAccess[]  // Accounts this user has access to
+
+  @@index([email])
+  @@index([role])
+}
+
+model UserAccountAccess {
+  id                String   @id @default(cuid())
+  userId            String
+  accountId         String
+  createdAt         DateTime @default(now())
+
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account           Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, accountId])
+  @@index([userId])
+  @@index([accountId])
+}
+
+model Account {
+  id                String   @id @default(cuid())
+  sellerId          String   @unique
+  name              String?  // Custom name for the account
+  marketplaceId     String
+  accessToken       String   @db.Text
+  refreshToken      String   @db.Text
+  expiresAt         DateTime
+  region            String   // NA, EU, FE
+  isSolutionProvider Boolean @default(false)
+  ownerId           String?  // User who owns this account (admin)
+  merchantId        String?  // Amazon Merchant ID for Seller Central links (mons_sel_dir_mcid)
+  advertisingId     String?  // Amazon Advertising ID for Seller Central links (mons_sel_dir_paid)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  owner             User?    @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  userAccess        UserAccountAccess[]  // Users who have access to this account
+  orders            Order[]
+  products          Product[]
+  financialEvents   FinancialEvent[]
+  inventoryItems    Inventory[]
+  clients           ClientAccount[]  // For Solution Providers
+
+  @@index([ownerId])
+}
+
+model ClientAccount {
+  id                String   @id @default(cuid())
+  solutionProviderId String
+  sellingPartnerId  String   @unique
+  sellerName        String?
+  marketplaceId     String
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  solutionProvider  Account  @relation(fields: [solutionProviderId], references: [id], onDelete: Cascade)
+
+  @@index([solutionProviderId])
+  @@index([sellingPartnerId])
+}
+
+model Product {
+  id                String   @id @default(cuid())
+  accountId         String
+  marketplaceId     String?  // Support multi-marketplace products (nullable for migration)
+  asin              String
+  sku               String
+  title             String   @db.Text
+  imageUrl          String?
+  price             Float?
+  cost              Float?   // COGS - Cost of Goods Sold
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  account           Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  orderItems        OrderItem[]
+  inventory         Inventory[]
+
+  @@unique([accountId, sku])
+  @@index([accountId, asin])
+  @@index([accountId, marketplaceId])
+}
+
+model Order {
+  id                String      @id @default(cuid())
+  accountId         String
+  amazonOrderId     String      @unique
+  purchaseDate      DateTime
+  orderStatus       String
+  totalAmount       Float
+  currency          String
+  numberOfItems     Int
+  marketplaceId     String
+  buyerEmail        String?
+  shippingAddress   Json?
+  isBusinessOrder   Boolean     @default(false)  // B2B order indicator
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  account           Account     @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  items             OrderItem[]
+
+  @@index([accountId, purchaseDate])
+  @@index([amazonOrderId])
+}
+
+model OrderItem {
+  id                String   @id @default(cuid())
+  orderId           String
+  productId         String
+  asin              String
+  sku               String
+  title             String   @db.Text
+  quantity          Int
+  itemPrice         Float
+  itemTax           Float
+  shippingPrice     Float
+  shippingTax       Float
+  promotionDiscount Float    @default(0)
+  createdAt         DateTime @default(now())
+
+  order             Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product           Product  @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model FinancialEvent {
+  id                String   @id @default(cuid())
+  accountId         String
+  marketplaceId     String?  // Marketplace for this financial event
+  eventType         String   // OrderRevenue, Refund, Fee, ServiceFee, etc.
+  postedDate        DateTime
+  amazonOrderId     String?
+  financialEventId  String?  // Amazon's Financial Event ID for direct linking
+  sku               String?  // SKU for product-specific events
+  description       String
+  amount            Float
+  currency          String
+  feeType           String?  // ReferralFee, FBAPerUnitFulfillmentFee, etc.
+  feeCategory       String?  // Categorized: referral, fba_fulfillment, storage, advertising, etc.
+  metadata          Json?    // Additional event data
+  createdAt         DateTime @default(now())
+
+  account           Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId, postedDate])
+  @@index([accountId, marketplaceId, postedDate])
+  @@index([amazonOrderId])
+  @@index([sku])
+  @@index([feeCategory])
+  @@index([financialEventId])
+}
+
+model Inventory {
+  id                String   @id @default(cuid())
+  accountId         String
+  productId         String
+  marketplaceId     String?  // Marketplace for this inventory
+  sku               String
+  fnSku             String?  // Fulfillment Network SKU
+  fulfillableQty    Int
+  inboundQty        Int      @default(0)
+  reservedQty       Int      @default(0)
+  unfulfillableQty  Int      @default(0)
+  lastUpdated       DateTime @default(now())
+  createdAt         DateTime @default(now())
+
+  account           Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  product           Product  @relation(fields: [productId], references: [id])
+
+  @@unique([accountId, sku, marketplaceId])
+  @@index([productId])
+  @@index([accountId, marketplaceId])
+}
+
+model SyncJob {
+  id                String   @id @default(cuid())
+  accountId         String?
+  jobType           String   // orders, finances, inventory, historical
+  status            String   // pending, running, completed, failed
+  startedAt         DateTime?
+  completedAt       DateTime?
+  dateRangeStart    DateTime? // For historical sync tracking
+  dateRangeEnd      DateTime?
+  error             String?   @db.Text
+  recordsProcessed  Int      @default(0)
+  totalRecords      Int?     // For progress tracking
+  createdAt         DateTime @default(now())
+
+  @@index([jobType, status])
+  @@index([accountId])
+  @@index([createdAt])
+}
+
+// Fee categorization mapping
+model FeeCategoryMapping {
+  id                String   @id @default(cuid())
+  feeType           String   @unique  // Amazon's fee type name
+  category          String   // Our categorization: referral, fba_fulfillment, storage, advertising, shipping, removal, other
+  displayName       String   // User-friendly name
+  description       String?  @db.Text
+  createdAt         DateTime @default(now())
+
+  @@index([category])
+}
+
+// Amazon Advertising Campaign
+model Campaign {
+  id                String   @id @default(cuid())
+  accountId         String
+  campaignId        String   @unique  // Amazon Campaign ID
+  name              String
+  campaignType      String   // sponsoredProducts, sponsoredBrands, sponsoredDisplay
+  targetingType     String   // manual, auto
+  state             String   // enabled, paused, archived
+  dailyBudget       Float?
+  startDate         DateTime?
+  endDate           DateTime?
+  portfolioId       String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  adMetrics         AdMetrics[]
+
+  @@index([accountId])
+  @@index([campaignId])
+}
+
+// Advertising Metrics (daily aggregated)
+model AdMetrics {
+  id                String   @id @default(cuid())
+  accountId         String
+  campaignId        String?
+  date              DateTime
+  sku               String?   // Product SKU if available
+  asin              String?   // Product ASIN if available
+  marketplaceId     String?
+
+  // Metrics
+  impressions       Int      @default(0)
+  clicks            Int      @default(0)
+  spend             Float    @default(0)
+  sales             Float    @default(0)   // Attributed sales
+  orders            Int      @default(0)   // Attributed orders
+
+  // Calculated fields
+  ctr               Float?   // Click-through rate
+  cpc               Float?   // Cost per click
+  acos              Float?   // Advertising cost of sale
+  roas              Float?   // Return on ad spend
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  campaign          Campaign? @relation(fields: [campaignId], references: [campaignId], onDelete: SetNull)
+
+  @@unique([accountId, date, campaignId, sku])
+  @@index([accountId, date])
+  @@index([sku])
+  @@index([asin])
+  @@index([marketplaceId])
+}
+
+// Sales & Traffic Report Metrics (Organic)
+// Data from GET_SALES_AND_TRAFFIC_REPORT
+model SalesTrafficMetric {
+  id                      String   @id @default(cuid())
+  accountId               String
+  date                    DateTime
+  parentAsin              String?  // Parent ASIN for aggregation
+  childAsin               String?  // Child ASIN for variant-level data
+  sku                     String?  // SKU if available
+  marketplaceId           String?
+  aggregationType         String   // DAY, WEEK, MONTH
+
+  // Sales Metrics
+  orderedProductSales     Float    @default(0)
+  orderedProductSalesB2B  Float    @default(0)
+  unitsOrdered            Int      @default(0)
+  unitsOrderedB2B         Int      @default(0)
+  totalOrderItems         Int      @default(0)
+  totalOrderItemsB2B      Int      @default(0)
+  unitsRefunded           Int      @default(0)
+
+  // Traffic Metrics
+  browserPageViews        Int      @default(0)
+  browserPageViewsB2B     Int      @default(0)
+  mobileAppPageViews      Int      @default(0)
+  mobileAppPageViewsB2B   Int      @default(0)
+  pageViews               Int      @default(0)  // Total page views
+  pageViewsB2B            Int      @default(0)
+  browserSessions         Int      @default(0)
+  browserSessionsB2B      Int      @default(0)
+  mobileAppSessions       Int      @default(0)
+  mobileAppSessionsB2B    Int      @default(0)
+  sessions                Int      @default(0)  // Total sessions
+  sessionsB2B             Int      @default(0)
+
+  // Performance Metrics
+  buyBoxPercentage        Float    @default(0)
+  buyBoxPercentageB2B     Float    @default(0)
+  unitSessionPercentage   Float    @default(0)  // Conversion rate
+  unitSessionPercentageB2B Float   @default(0)
+
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  @@unique([accountId, date, childAsin, aggregationType])
+  @@index([accountId, date])
+  @@index([parentAsin])
+  @@index([childAsin])
+  @@index([sku])
+  @@index([marketplaceId, date])
+  @@index([aggregationType])
+}
