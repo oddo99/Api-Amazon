@@ -28,6 +28,15 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
+// Root route
+app.get('/', (req, res) => {
+  res.json({
+    service: 'Sellerboard Clone API',
+    status: 'active',
+    version: '1.0.0'
+  });
+});
+
 // Start server
 const PORT = config.port;
 
