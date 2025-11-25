@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import { Suspense } from 'react';
 import './globals.css';
 import { AuthProvider } from '@/lib/contexts/AuthContext';
 import { ThemeProvider } from '@/lib/contexts/ThemeContext';
@@ -23,7 +24,9 @@ export default function RootLayout({
         <ThemeProvider defaultTheme="system" storageKey="sellerboard-theme">
           <AuthProvider>
             <div className="flex min-h-screen bg-gray-50 dark:bg-slate-900 transition-colors duration-300">
-              <Sidebar />
+              <Suspense fallback={<div className="w-64" />}>
+                <Sidebar />
+              </Suspense>
               <main className="flex-1 ml-64 transition-all duration-300">
                 {children}
               </main>
