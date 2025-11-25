@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 
-export default function TokenReceivedPage() {
+function TokenReceivedContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [copied, setCopied] = useState<string | null>(null);
@@ -242,5 +242,13 @@ export default function TokenReceivedPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function TokenReceivedPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div></div>}>
+      <TokenReceivedContent />
+    </Suspense>
   );
 }
