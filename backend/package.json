@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@prisma/client": "^5.7.1",
+    "@supabase/supabase-js": "^2.84.0",
     "amazon-sp-api": "^1.1.7",
     "axios": "^1.12.2",
     "bcryptjs": "^3.0.2",
