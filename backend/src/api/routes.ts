@@ -343,7 +343,7 @@ router.get('/products/:accountId/by-asin', authorizeAccount, async (req, res) =>
     });
 
     // Group products by ASIN
-    const productsByAsin = products.reduce((acc, product) => {
+    const productsByAsin = products.reduce((acc: any, product: any) => {
       if (!acc[product.asin]) {
         acc[product.asin] = {
           asin: product.asin,
@@ -400,7 +400,7 @@ router.get('/products/:accountId/by-asin', authorizeAccount, async (req, res) =>
         marketplaceId: product.marketplaceId,
         price: product.price,
         cost: product.cost,
-        stock: product.inventory.reduce((sum, inv) => sum + inv.fulfillableQty, 0),
+        stock: product.inventory.reduce((sum: any, inv: any) => sum + inv.fulfillableQty, 0),
         salesPromise: sales,
         revenuePromise: revenue,
       });
@@ -533,7 +533,7 @@ router.get('/products/:accountId/:sku/orders', authorizeAccount, async (req, res
     });
 
     // Get financial event IDs for all orders
-    const orderIds = orders.map(o => o.amazonOrderId);
+    const orderIds = orders.map((o: any) => o.amazonOrderId);
     const financialEvents = await prisma.financialEvent.findMany({
       where: {
         amazonOrderId: { in: orderIds },
@@ -548,14 +548,14 @@ router.get('/products/:accountId/:sku/orders', authorizeAccount, async (req, res
 
     // Create a map of amazonOrderId -> financialEventId
     const financialEventMap = new Map(
-      financialEvents.map(fe => [fe.amazonOrderId, fe.financialEventId])
+      financialEvents.map((fe: any) => [fe.amazonOrderId, fe.financialEventId])
     );
 
     // Apply fallback pricing logic and add financialEventId
-    const ordersWithCorrectPrices = orders.map(order => ({
+    const ordersWithCorrectPrices = orders.map((order: any) => ({
       ...order,
       financialEventId: financialEventMap.get(order.amazonOrderId) || null,
-      items: order.items.map(item => ({
+      items: order.items.map((item: any) => ({
         ...item,
         itemPrice: item.itemPrice > 0 ? item.itemPrice : (product?.price || 0)
       }))
@@ -917,8 +917,8 @@ router.get('/marketplaces/:accountId', authorizeAccount, async (req, res) => {
     // Filter out unmapped marketplaces and map to Italian names
     res.json(
       marketplaces
-        .filter(m => marketplaceNames[m.marketplaceId]) // Only include mapped marketplaces
-        .map(m => ({
+        .filter((m: any) => marketplaceNames[m.marketplaceId]) // Only include mapped marketplaces
+        .map((m: any) => ({
           marketplaceId: m.marketplaceId,
           name: marketplaceNames[m.marketplaceId],
         }))
@@ -1003,9 +1003,9 @@ router.get('/orders/:accountId/:orderId/balance', authorizeAccount, async (req, 
       // All values remain at 0 and arrays remain empty
     } else {
       // Use actual financial events
-      revenue = events.filter(e => e.eventType === 'OrderRevenue');
-      fees = events.filter(e => e.eventType === 'Fee');
-      refunds = events.filter(e => e.eventType === 'Refund');
+      revenue = events.filter((e: any) => e.eventType === 'OrderRevenue');
+      fees = events.filter((e: any) => e.eventType === 'Fee');
+      refunds = events.filter((e: any) => e.eventType === 'Refund');
 
       // Calculate totals
       totalRevenue = revenue.reduce((sum, e) => sum + e.amount, 0);
@@ -1150,7 +1150,7 @@ router.get('/analytics/:accountId/products', authorizeAccount, async (req, res) 
     });
 
     // Get product titles from Product table
-    const asins = products.map(p => p.childAsin).filter(Boolean);
+    const asins = products.map((p: any) => p.childAsin).filter(Boolean);
     const productDetails = await prisma.product.findMany({
       where: {
         accountId,
@@ -1162,11 +1162,11 @@ router.get('/analytics/:accountId/products', authorizeAccount, async (req, res) 
       },
     });
 
-    const titleMap = new Map(productDetails.map(p => [p.asin, p.title]));
+    const titleMap = new Map(productDetails.map((p: any) => [p.asin, p.title]));
 
     const result = products
-      .filter(p => p.sku && p.sku.trim() !== '') // Ensure SKU is not empty
-      .map(p => ({
+      .filter((p: any) => p.sku && p.sku.trim() !== '') // Ensure SKU is not empty
+      .map((p: any) => ({
         sku: p.sku!,
         asin: p.childAsin,
         title: titleMap.get(p.childAsin!) || p.childAsin,
@@ -1208,11 +1208,11 @@ router.get('/analytics/:accountId/marketplaces', authorizeAccount, async (req, r
 
     // Create a map of marketplace IDs to record counts
     const recordCountMap = new Map(
-      marketplaceData.map(m => [m.marketplaceId!, m._count.id])
+      marketplaceData.map((m: any) => [m.marketplaceId!, m._count.id])
     );
 
     // Return all EU marketplaces with record counts
-    const result = euMarketplaces.map(m => ({
+    const result = euMarketplaces.map((m: any) => ({
       marketplaceId: m.id,
       name: m.name,
       recordCount: recordCountMap.get(m.id) || 0,
@@ -1259,7 +1259,7 @@ router.get('/buy-box/:accountId', authorizeAccount, async (req, res) => {
     });
 
     // Get product titles
-    const asins = buyBoxData.map(d => d.childAsin).filter(Boolean);
+    const asins = buyBoxData.map((d: any) => d.childAsin).filter(Boolean);
     const products = await prisma.product.findMany({
       where: {
         accountId,
@@ -1271,7 +1271,7 @@ router.get('/buy-box/:accountId', authorizeAccount, async (req, res) => {
       },
     });
 
-    const titleMap = new Map(products.map(p => [p.asin, p.title]));
+    const titleMap = new Map(products.map((p: any) => [p.asin, p.title]));
 
     // Calculate average Buy Box over last 30 days
     const thirtyDaysAgo = new Date();
@@ -1289,13 +1289,13 @@ router.get('/buy-box/:accountId', authorizeAccount, async (req, res) => {
       },
     });
 
-    const avgMap = new Map(historicalData.map(h => [h.childAsin, h._avg.buyBoxPercentage || 0]));
+    const avgMap = new Map(historicalData.map((h: any) => [h.childAsin, h._avg.buyBoxPercentage || 0]));
 
-    const result = buyBoxData.map(d => {
+    const result = buyBoxData.map((d: any) => {
       const currentBuyBox = d.buyBoxPercentage;
       const averageBuyBox = avgMap.get(d.childAsin!) || currentBuyBox;
       const trend = currentBuyBox > averageBuyBox + 2 ? 'up' :
-                    currentBuyBox < averageBuyBox - 2 ? 'down' : 'stable';
+        currentBuyBox < averageBuyBox - 2 ? 'down' : 'stable';
 
       return {
         asin: d.childAsin,

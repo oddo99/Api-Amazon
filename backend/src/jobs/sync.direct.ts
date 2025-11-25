@@ -61,14 +61,14 @@ export async function syncFinances(accountId: string, sellingPartnerId?: string)
 
   try {
     const financeService = new FinanceService(accountId, sellingPartnerId);
-    const result = await financeService.syncFinancialEvents(accountId, 730, sellingPartnerId);
+    const result = await financeService.syncAllTransactions(accountId, 730);
 
     await prisma.syncJob.update({
       where: { id: syncJob.id },
       data: {
         status: 'completed',
         completedAt: new Date(),
-        recordsProcessed: result.eventsProcessed,
+        recordsProcessed: result.transactionsProcessed,
       },
     });
 

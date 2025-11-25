@@ -224,7 +224,7 @@ export class AdvertisingService {
       },
     });
 
-    return metrics.map(m => ({
+    return metrics.map((m: any) => ({
       sku: m.sku!,
       spend: m._sum.spend || 0,
       sales: m._sum.sales || 0,

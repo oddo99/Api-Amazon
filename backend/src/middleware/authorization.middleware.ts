@@ -59,7 +59,7 @@ export const getUserAccessibleAccounts = async (userId: string, userRole: string
       const accounts = await prisma.account.findMany({
         select: { id: true },
       });
-      return accounts.map(a => a.id);
+      return accounts.map((a: any) => a.id);
     }
 
     // Regular user - get accounts they have access to
@@ -68,7 +68,7 @@ export const getUserAccessibleAccounts = async (userId: string, userRole: string
       select: { accountId: true },
     });
 
-    return access.map(a => a.accountId);
+    return access.map((a: any) => a.accountId);
   } catch (error) {
     console.error('Error getting accessible accounts:', error);
     return [];

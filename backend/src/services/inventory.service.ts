@@ -246,7 +246,7 @@ export class InventoryService {
     });
 
     // Group inventory by ASIN
-    const inventoryByAsin = allInventory.reduce((acc, inv) => {
+    const inventoryByAsin = allInventory.reduce((acc: any, inv: any) => {
       const asin = inv.product.asin;
       if (!asin) return acc;
 
@@ -274,12 +274,12 @@ export class InventoryService {
 
     for (const asinData of Object.values(inventoryByAsin)) {
       // Skip if stock is not low (threshold: 10)
-      if (asinData.totalStock > 10) continue;
+      if ((asinData as any).totalStock > 10) continue;
 
       // Get sales for all SKUs with this ASIN (last 30 days)
       const orderItems = await prisma.orderItem.findMany({
         where: {
-          productId: { in: asinData.productIds },
+          productId: { in: (asinData as any).productIds },
           order: {
             accountId,
             purchaseDate: {
@@ -292,18 +292,18 @@ export class InventoryService {
         },
       });
 
-      const totalQuantitySold = orderItems.reduce((sum, item) => sum + item.quantity, 0);
+      const totalQuantitySold = orderItems.reduce((sum: any, item: any) => sum + item.quantity, 0);
       const avgDailySales = totalQuantitySold / 30;
 
       const daysUntilOutOfStock = avgDailySales > 0
-        ? Math.floor(asinData.totalStock / avgDailySales)
+        ? Math.floor((asinData as any).totalStock / avgDailySales)
         : 999;
 
       alerts.push({
-        asin: asinData.asin,
-        product: asinData.product,
-        currentStock: asinData.totalStock,
-        inboundQty: asinData.totalInbound,
+        asin: (asinData as any).asin,
+        product: (asinData as any).product,
+        currentStock: (asinData as any).totalStock,
+        inboundQty: (asinData as any).totalInbound,
         avgDailySales: Math.round(avgDailySales * 100) / 100,
         sales30d: totalQuantitySold, // Total units sold in last 30 days
         daysUntilOutOfStock,

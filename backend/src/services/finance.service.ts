@@ -12,7 +12,7 @@ async function loadFeeCategoryMappings() {
 
   const mappings = await prisma.feeCategoryMapping.findMany();
   feeCategoryCache = new Map(
-    mappings.map(m => [m.feeType, { category: m.category, displayName: m.displayName }])
+    mappings.map((m: any) => [m.feeType, { category: m.category, displayName: m.displayName }])
   );
 
   return feeCategoryCache;
@@ -581,7 +581,7 @@ export class FinanceService {
 
     // Get financial events for those specific orders
     // Important: Filter by order IDs, not by postedDate, to handle deferred transactions correctly
-    const orderIds = orders.map(o => o.amazonOrderId);
+    const orderIds = orders.map((o: any) => o.amazonOrderId);
 
     const eventsWhere: any = {
       accountId,
@@ -602,15 +602,15 @@ export class FinanceService {
 
     // Calculate revenue from order.totalAmount (same as Orders page)
     // This ensures revenue is based on when the order was made (purchaseDate), not when Amazon released payment
-    let revenue = orders.reduce((sum, order) => sum + order.totalAmount, 0);
+    let revenue = orders.reduce((sum: any, order: any) => sum + order.totalAmount, 0);
 
     const refunds = events
-      .filter(e => e.eventType === 'Refund')
-      .reduce((sum, e) => sum + Math.abs(e.amount), 0);
+      .filter((e: any) => e.eventType === 'Refund')
+      .reduce((sum: any, e: any) => sum + Math.abs(e.amount), 0);
 
     const fees = events
-      .filter(e => e.eventType === 'Fee' || e.eventType === 'ServiceFee')
-      .reduce((sum, e) => sum + Math.abs(e.amount), 0);
+      .filter((e: any) => e.eventType === 'Fee' || e.eventType === 'ServiceFee')
+      .reduce((sum: any, e: any) => sum + Math.abs(e.amount), 0);
 
     // Note: We no longer add estimated revenue for orders without financial events
     // because we now sync DEFERRED transactions via Finances API v2024-06-19
@@ -624,8 +624,8 @@ export class FinanceService {
     let vat = 0;
     let cogs = 0;
 
-    orders.forEach(order => {
-      order.items.forEach(item => {
+    orders.forEach((order: any) => {
+      order.items.forEach((item: any) => {
         units += item.quantity;
         promo += item.promotionDiscount || 0;
         shipping_costs += item.shippingPrice || 0;
@@ -651,12 +651,12 @@ export class FinanceService {
       where: adMetricsWhere,
     });
 
-    const advertising_cost = adMetrics.reduce((sum, metric) => sum + metric.spend, 0);
+    const advertising_cost = adMetrics.reduce((sum: any, metric: any) => sum + metric.spend, 0);
 
     // Extract giftwrap charges from financial events (if any)
     giftwrap = events
-      .filter(e => e.description?.toLowerCase().includes('giftwrap') || e.feeType?.toLowerCase().includes('giftwrap'))
-      .reduce((sum, e) => sum + Math.abs(e.amount), 0);
+      .filter((e: any) => e.description?.toLowerCase().includes('giftwrap') || e.feeType?.toLowerCase().includes('giftwrap'))
+      .reduce((sum: any, e: any) => sum + Math.abs(e.amount), 0);
 
     // Placeholders for metrics not yet available
     const indirect_expenses = 0; // To be added manually by user
@@ -727,7 +727,7 @@ export class FinanceService {
     });
 
     // Get financial events for those specific orders (not by postedDate)
-    const orderIds = orders.map(o => o.amazonOrderId);
+    const orderIds = orders.map((o: any) => o.amazonOrderId);
 
     const where: any = {
       accountId,
@@ -963,7 +963,7 @@ export class FinanceService {
     });
 
     // Get fee events for those specific orders (not by postedDate)
-    const orderIds = orders.map(o => o.amazonOrderId);
+    const orderIds = orders.map((o: any) => o.amazonOrderId);
 
     const whereClause: any = {
       accountId,
@@ -1073,7 +1073,7 @@ export class FinanceService {
 
     // Create map of order ID to marketplace ID
     const orderMarketplaceMap = new Map(
-      orders.map(o => [o.amazonOrderId, o.marketplaceId])
+      orders.map((o: any) => [o.amazonOrderId, o.marketplaceId])
     );
 
     // Get financial events

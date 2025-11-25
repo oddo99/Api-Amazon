@@ -182,7 +182,7 @@ router.get('/me', authenticate, async (req: AuthRequest, res) => {
     // Combine owned accounts and accessed accounts
     const accounts = [
       ...user.ownedAccounts,
-      ...user.accountAccess.map(a => a.account),
+      ...user.accountAccess.map((a: any) => a.account),
     ];
 
     res.json({

@@ -50,11 +50,11 @@ router.get('/users', async (req: AuthRequest, res) => {
     });
 
     // Format response with account access
-    const formattedUsers = users.map(user => ({
+    const formattedUsers = users.map((user: any) => ({
       ...user,
       accounts: [
         ...user.ownedAccounts,
-        ...user.accountAccess.map(a => a.account),
+        ...user.accountAccess.map((a: any) => a.account),
       ],
       ownedAccounts: undefined,
       accountAccess: undefined,
@@ -139,7 +139,7 @@ router.post('/users', async (req: AuthRequest, res) => {
       message: 'User created successfully',
       user: {
         ...user,
-        accounts: user.accountAccess.map(a => a.account),
+        accounts: user.accountAccess.map((a: any) => a.account),
         accountAccess: undefined,
       },
     });
@@ -343,7 +343,7 @@ router.get('/users/:userId/accounts', async (req: AuthRequest, res) => {
 
     const accounts = [
       ...user.ownedAccounts,
-      ...user.accountAccess.map(a => a.account),
+      ...user.accountAccess.map((a: any) => a.account),
     ];
 
     res.json(accounts);

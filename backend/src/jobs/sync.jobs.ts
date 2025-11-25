@@ -112,27 +112,20 @@ financesQueue.process(async (job) => {
   try {
     const financeService = new FinanceService(accountId, sellingPartnerId);
 
-    // Sync using old Financial Events API (for ServiceFees and historical data)
-    const result = await financeService.syncFinancialEvents(accountId, 730, sellingPartnerId);
-
     // Sync using new Transactions API (for DEFERRED, DEFERRED_RELEASED, RELEASED transactions)
-    // Only sync recent 45 days to capture deferred transactions
-    console.log('\n📊 Syncing transactions via new Finances API v2024-06-19...');
-    const transactionsResult = await financeService.syncAllTransactions(accountId, 45);
+    console.log('\n📊 Syncing transactions via Finances API v2024-06-19...');
+    const result = await financeService.syncAllTransactions(accountId, 730);
 
     await prisma.syncJob.update({
       where: { id: syncJob.id },
       data: {
         status: 'completed',
         completedAt: new Date(),
-        recordsProcessed: result.eventsProcessed + transactionsResult.transactionsProcessed,
+        recordsProcessed: result.transactionsProcessed,
       },
     });
 
-    return {
-      ...result,
-      transactionsProcessed: transactionsResult.transactionsProcessed
-    };
+    return result;
   } catch (error: any) {
     await prisma.syncJob.update({
       where: { id: syncJob.id },

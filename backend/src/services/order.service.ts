@@ -374,7 +374,7 @@ export class OrderService {
     });
 
     // Get financial event IDs for all orders
-    const orderIds = orders.map(o => o.amazonOrderId);
+    const orderIds = orders.map((o: any) => o.amazonOrderId);
     const financialEvents = await prisma.financialEvent.findMany({
       where: {
         amazonOrderId: { in: orderIds },
@@ -389,7 +389,7 @@ export class OrderService {
 
     // Create a map of amazonOrderId -> financialEventId
     const financialEventMap = new Map(
-      financialEvents.map(fe => [fe.amazonOrderId, fe.financialEventId])
+      financialEvents.map((fe: any) => [fe.amazonOrderId, fe.financialEventId])
     );
 
     // Calculate totalAmount for orders with missing prices (Pending orders)
@@ -425,7 +425,7 @@ export class OrderService {
       'Amazon.com': { name: 'Stati Uniti', currency: 'USD' },
     };
 
-    return orders.map(order => {
+    return orders.map((order: any) => {
       // Get marketplace info (name and currency)
       const marketplaceData = marketplaceInfo[order.marketplaceId];
       const marketplaceName = marketplaceData?.name || order.marketplaceId;
@@ -434,8 +434,8 @@ export class OrderService {
       // For Pending/Unshipped orders, don't calculate - wait for Amazon to provide the price
       // Show 0 until the order is processed and Amazon provides OrderTotal
       if ((order.orderStatus === 'Pending' || order.orderStatus === 'Unshipped') &&
-          order.totalAmount === 0 &&
-          order.orderStatus !== 'Canceled') {
+        order.totalAmount === 0 &&
+        order.orderStatus !== 'Canceled') {
         return {
           ...order,
           totalAmount: 0, // Keep as 0 until Amazon processes the order
