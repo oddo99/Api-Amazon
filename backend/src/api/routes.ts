@@ -1313,7 +1313,7 @@ router.get('/buy-box/:accountId', authorizeAccount, async (req, res) => {
     });
 
     // Sort by Buy Box percentage (lowest first by default)
-    const sorted = result.sort((a, b) => {
+    const sorted = result.sort((a: any, b: any) => {
       if (sortBy === 'buybox-desc') return b.currentBuyBox - a.currentBuyBox;
       if (sortBy === 'sales') return b.sales - a.sales;
       if (sortBy === 'product') return a.title.localeCompare(b.title);

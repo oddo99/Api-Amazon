@@ -430,7 +430,7 @@ export class AnalyticsService {
     }
 
     // Aggregate totals
-    const totals = metrics.reduce((acc, m) => ({
+    const totals = metrics.reduce((acc: any, m: any) => ({
       sales: acc.sales + m.orderedProductSales,
       units: acc.units + m.unitsOrdered,
       sessions: acc.sessions + m.sessions,
@@ -441,7 +441,7 @@ export class AnalyticsService {
     // Calculate KPIs
     const conversionRate = totals.sessions > 0 ? (totals.orders / totals.sessions) * 100 : 0;
     const avgOrderValue = totals.orders > 0 ? totals.sales / totals.orders : 0;
-    const avgBuyBox = metrics.reduce((sum, m) => sum + m.buyBoxPercentage, 0) / metrics.length;
+    const avgBuyBox = metrics.reduce((sum: any, m: any) => sum + m.buyBoxPercentage, 0) / metrics.length;
 
     return {
       totalSales: totals.sales,
