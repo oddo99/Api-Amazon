@@ -141,7 +141,9 @@ export function scheduleJobs(accountId: string, sellingPartnerId: string) {
   console.log(`⚠️  Scheduled jobs not available in serverless mode`);
 }
 
-export const ordersQueue = null;
-export const financesQueue = null;
-export const inventoryQueue = null;
-export const analyticsQueue = null;
+import Queue from 'bull';
+
+export const ordersQueue: Queue.Queue | null = null;
+export const financesQueue: Queue.Queue | null = null;
+export const inventoryQueue: Queue.Queue | null = null;
+export const analyticsQueue: Queue.Queue | null = null;

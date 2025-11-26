@@ -729,8 +729,11 @@ router.post('/sync/:accountId', authorizeAccount, async (req, res) => {
     const { accountId } = req.params;
     const { type, sellingPartnerId, dateRange, useQueue = true } = req.body;
 
+    // Check if queues are initialized (they might be null in serverless/local env)
+    const queuesAvailable = ordersQueue && financesQueue && inventoryQueue;
+
     // Use async queues (recommended for large syncs)
-    if (useQueue) {
+    if (useQueue && ordersQueue && financesQueue && inventoryQueue) {
       let job;
 
       if (type === 'orders') {
@@ -808,6 +811,11 @@ router.get('/sync/status/:accountId', authorizeAccount, async (req, res) => {
 router.get('/sync/job/:jobId', async (req, res) => {
   try {
     const { jobId } = req.params;
+
+    // Check if queues are available
+    if (!ordersQueue || !financesQueue || !inventoryQueue) {
+      return res.status(404).json({ error: 'Queues not available' });
+    }
 
     // Try to find job in all queues
     let job = await ordersQueue.getJob(jobId);
